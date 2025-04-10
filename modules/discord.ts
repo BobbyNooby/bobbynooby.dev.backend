@@ -1,4 +1,4 @@
-import { Client, IntentsBitField } from "discord.js";
+import { Client, GuildMember, IntentsBitField } from "discord.js";
 import { DiscordStatuses } from "../types";
 import WebSocket from "ws";
 
@@ -38,16 +38,29 @@ export class DiscordBot {
     this.client.on("presenceUpdate", async (oldPresence, newPresence) => {
       if (newPresence.user) {
         if (newPresence.user.id === process.env.DISCORD_USER_ID) {
-          this.status = newPresence.status as DiscordStatuses;
-          this.consoleBob(`Status changed to ${this.status}`);
-          this.broadcast({ status: this.status });
+          this.consoleBob(`Status changed to ${newPresence.status}`);
+          this.broadcast({ status: newPresence.status });
         }
       }
     });
   }
 
-  addWebSocket(ws: WebSocket) {
+  async getDiscordStatus() {
+    const server = await this.client.guilds.fetch(
+      process.env.DISCORD_GUILD_ID!
+    );
+    const user: GuildMember = await server.members.fetch(
+      process.env.DISCORD_USER_ID!
+    );
+    const presenceStatus = user.presence?.status || "offline";
+
+    return presenceStatus;
+  }
+
+  async addWebSocket(ws: WebSocket) {
     this.websockets.add(ws);
+
+    ws.send(JSON.stringify({ status: await this.getDiscordStatus() }));
   }
 
   removeWebSocket(ws: WebSocket) {
@@ -55,10 +68,9 @@ export class DiscordBot {
   }
 
   broadcast(message: any) {
-    const jsonMessage = JSON.stringify(message);
     for (const ws of this.websockets) {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(jsonMessage);
+        ws.send(JSON.stringify(message));
       }
     }
   }

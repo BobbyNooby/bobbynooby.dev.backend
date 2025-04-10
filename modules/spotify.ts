@@ -1,6 +1,5 @@
 import WebSocket from "ws";
-import { secondsToTimeString } from "../utils";
-import { Db, MongoClient } from "mongodb";
+import { Db } from "mongodb";
 import { MongoDBClient } from "./mongodb";
 
 export type SpotifySongData = {
@@ -30,17 +29,17 @@ export class SpotifyClient {
   db: Db;
   private interval: NodeJS.Timeout | null;
 
-  constructor() {
+  constructor(mongoDbClient: MongoDBClient) {
     this.websockets = new Set<WebSocket>();
     this.access_token = "";
     this.interval = null;
+    this.db = mongoDbClient.dbAtlas;
   }
 
   async initialize() {
     try {
       await this.refreshToken();
       this.startPolling();
-      this.db = new MongoDBClient().db;
     } catch (e) {
       this.consoleBob(`Error connecting to Spotify : ${e}`);
       process.exit(1);
@@ -132,7 +131,6 @@ export class SpotifyClient {
       this.songLog(currentSong);
       await this.updateLastPlayed(currentSong);
     } else {
-      // If not playing, send last played from DB
       await this.sendLastPlayedFromDB();
     }
   }
@@ -179,9 +177,9 @@ export class SpotifyClient {
     }
   }
 
-  addWebSocket(ws: WebSocket) {
+  async addWebSocket(ws: WebSocket) {
     this.websockets.add(ws);
-    this.sendLastPlayedFromDB();
+    this.checkCurrentSong();
   }
 
   removeWebSocket(ws: WebSocket) {
@@ -189,35 +187,34 @@ export class SpotifyClient {
   }
 
   broadcast(message: any) {
-    const jsonMessage = JSON.stringify(message);
     for (const ws of this.websockets) {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(jsonMessage);
+        ws.send(JSON.stringify(message));
       }
     }
   }
 
   songLog(song: SpotifySongData | SpotifyLastPlayedData) {
-    this.consoleBob(
-      `[Spotify] Song Status : ${song.isPlaying ? "Playing" : "Not playing"}`
-    );
-    this.consoleBob(`[Spotify] Song Title : ${song.title}`);
-    this.consoleBob(`[Spotify] Song Artist : ${song.artist}`);
-    this.consoleBob(`[Spotify] Song Album : ${song.album}`);
-    this.consoleBob(`[Spotify] Song Album Image URL : ${song.albumImageUrl}`);
-    this.consoleBob(`[Spotify] Song URL : ${song.songUrl}`);
+    // this.consoleBob(
+    //   `[Spotify] Song Status : ${song.isPlaying ? "Playing" : "Not playing"}`
+    // );
+    this.consoleBob(`Song Title : ${song.title}`);
+    // this.consoleBob(`[Spotify] Song Artist : ${song.artist}`);
+    // this.consoleBob(`[Spotify] Song Album : ${song.album}`);
+    // this.consoleBob(`[Spotify] Song Album Image URL : ${song.albumImageUrl}`);
+    // this.consoleBob(`[Spotify] Song URL : ${song.songUrl}`);
 
-    if (Object.hasOwn(song, "playedAt")) {
-      const songAs = song as SpotifyLastPlayedData;
-      const currentTime = new Date().getTime();
-      const playedAt = new Date(songAs.playedAt).getTime();
-      const timeDifference = Math.abs(currentTime - playedAt) / 1000;
+    // if (Object.hasOwn(song, "playedAt")) {
+    //   const songAs = song as SpotifyLastPlayedData;
+    //   const currentTime = new Date().getTime();
+    //   const playedAt = new Date(songAs.playedAt).getTime();
+    //   const timeDifference = Math.abs(currentTime - playedAt) / 1000;
 
-      this.consoleBob(timeDifference);
-      this.consoleBob(
-        `Song played at : ${secondsToTimeString(timeDifference)}`
-      );
-    }
+    //   this.consoleBob(timeDifference);
+    //   this.consoleBob(
+    //     `Song played at : ${secondsToTimeString(timeDifference)}`
+    //   );
+    // }
   }
 
   consoleBob(...args: any[]) {

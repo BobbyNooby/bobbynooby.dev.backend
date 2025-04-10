@@ -5,6 +5,8 @@ import { WebSocketServer } from "ws";
 import { DiscordBot } from "./modules/discord";
 import { UserCount } from "./modules/userCount";
 import { SpotifyClient } from "./modules/spotify";
+import { MongoDBClient } from "./modules/mongodb";
+import { SimpleChat } from "./modules/chat";
 
 dotenv.config();
 
@@ -17,14 +19,18 @@ const server = app.listen(port, () => {
 });
 
 const wss = new WebSocketServer({ server });
+const mongoDbClient = new MongoDBClient();
+await mongoDbClient.initialize();
 
 const discordBot = new DiscordBot();
 await discordBot.initialize();
 
 const userCount = new UserCount();
 
-const spotifyClient = new SpotifyClient();
+const spotifyClient = new SpotifyClient(mongoDbClient);
 await spotifyClient.initialize();
+
+const chat = new SimpleChat(mongoDbClient);
 
 wss.on("connection", (ws, req) => {
   const subroute = req.url;
@@ -54,6 +60,19 @@ wss.on("connection", (ws, req) => {
     ws.on("close", () => {
       spotifyClient.removeWebSocket(ws);
       consoleBob("WebSocket connection to /spotify closed");
+    });
+  }
+
+  if (subroute === "/chat") {
+    chat.addWebSocket(ws);
+
+    ws.on("message", (message) => {
+      chat.onRecieve(String(message));
+    });
+
+    ws.on("close", () => {
+      chat.removeWebSocket(ws);
+      consoleBob("WebSocket connection to /chat closed");
     });
   }
 });

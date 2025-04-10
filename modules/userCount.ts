@@ -20,7 +20,9 @@ export class UserCount {
   }
 
   updateUserCount() {
-    this.userCount = this.websockets.size;
+    this.userCount = Array.from(this.websockets).filter(
+      (ws) => ws.readyState === WebSocket.OPEN
+    ).length;
     consoleBob(`[UserCount] User count updated to ${this.userCount}`);
     this.broadcast({ userCount: this.userCount });
   }
