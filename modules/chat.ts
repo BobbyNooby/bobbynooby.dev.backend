@@ -3,21 +3,6 @@ import WebSocket from "ws";
 import { MongoDBClient } from "./mongodb";
 import { ChatMessage, RecievedChatMessage } from "../types";
 
-const starterMessages: ChatMessage[] = [
-  {
-    message: "Welcome to the chat! Use /username to change your username.",
-    rank: "owner",
-    created_at: new Date().toISOString(),
-    name: "bobbynooby.dev",
-  },
-  {
-    message: "If the name is green, its me! If not, its someone else.",
-    rank: "owner",
-    created_at: new Date().toISOString(),
-    name: "bobbynooby.dev",
-  },
-];
-
 export class SimpleChat {
   users: Set<WebSocket>;
   mongoClient: MongoDBClient;
@@ -61,8 +46,7 @@ export class SimpleChat {
     this.users.add(ws);
 
     const pastMessages: ChatMessage[] = [
-      ...(await this.getLastMessages()),
-      ...starterMessages,
+      ...(await this.getLastMessages())
     ];
 
     ws.send(JSON.stringify({ initialMessages: pastMessages }));
