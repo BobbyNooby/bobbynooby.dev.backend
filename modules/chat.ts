@@ -82,7 +82,7 @@ export class SimpleChat {
 
   async getLastMessages(count: number = 100): Promise<ChatMessage[]> {
     return await this.db
-      .collection<ChatMessage>("chat-dev")
+      .collection<ChatMessage>("chat-prod")
       .find()
       .sort({ created_at: 1 })
       .limit(count)
