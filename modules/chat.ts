@@ -53,7 +53,7 @@ export class SimpleChat {
           : "guest",
     };
 
-    this.db.collection("chat-dev").insertOne(messageObject);
+    this.db.collection("chat-prod").insertOne(messageObject);
     this.broadcast({ message: messageObject });
   }
 
