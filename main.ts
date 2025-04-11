@@ -38,6 +38,9 @@ const chat = new SimpleChat(mongoDbClient, discordBot);
 wss.on("connection", async (ws, req) => {
   const subroute = req.url;
   const session = await getSession(convertReq(req, app), authConfig);
+
+  consoleBob(`Websocket Connected. User : ${session?.user?.name}, ID : ${session?.user?.id}`);
+
   const sessionId = session?.user?.id || "skibiditoiletmoment";
 
   if (subroute === "/discord") {
