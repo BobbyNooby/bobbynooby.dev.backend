@@ -7,13 +7,14 @@ import { UserCount } from "./modules/userCount";
 import { SpotifyClient } from "./modules/spotify";
 import { MongoDBClient } from "./modules/mongodb";
 import { SimpleChat } from "./modules/chat";
-import { getSession } from "@auth/express";
+import { ExpressAuth, getSession } from "@auth/express";
 import { authConfig } from "./auth";
 
 dotenv.config();
 
 const app = express();
 app.set("trust proxy", true);
+app.use("/", ExpressAuth(authConfig));
 const port = 3000;
 
 const server = app.listen(port, () => {
@@ -37,9 +38,12 @@ const chat = new SimpleChat(mongoDbClient, discordBot);
 
 wss.on("connection", async (ws, req) => {
   const subroute = req.url;
+  consoleBob(req.headers);
   const session = await getSession(convertReq(req, app), authConfig);
 
-  consoleBob(`Websocket Connected. User : ${session?.user?.name}, ID : ${session?.user?.id}`);
+  consoleBob(
+    `Websocket Connected. User : ${session?.user?.name}, ID : ${session?.user?.id}`
+  );
 
   const sessionId = session?.user?.id || "skibiditoiletmoment";
 

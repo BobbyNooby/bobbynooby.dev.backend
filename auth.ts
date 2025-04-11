@@ -14,25 +14,42 @@ if (!DISCORD_CLIENT_SECRET) {
   process.exit(1);
 }
 
+const IS_PRODUCTION = process.env.IS_PRODUCTION;
+if (IS_PRODUCTION == undefined) {
+  consoleBob("IS_PRODUCTION is not set");
+  process.exit(1);
+}
+
 export const authConfig: ExpressAuthConfig = {
-  providers: [
-    Discord({
-      clientId: DISCORD_CLIENT_ID,
-      clientSecret: DISCORD_CLIENT_SECRET,
-      authorization: "https://discord.com/api/oauth2/authorize?scope=identify",
-    }),
-  ],
-  trustHost: true,
-  callbacks: {
-    async jwt({ token, account, profile }) {
-      if (profile) {
-        token.id = profile.id;
-      }
-      return token;
-    },
-    async session({ session, token, user }) {
-      session.user.id = token.id as string;
-      return session;
-    },
-  },
+	providers: [
+		Discord({
+			clientId: DISCORD_CLIENT_ID,
+			clientSecret: DISCORD_CLIENT_SECRET,
+			authorization: 'https://discord.com/api/oauth2/authorize?scope=identify'
+		})
+	],
+	trustHost: true,
+	callbacks: {
+		async jwt({ token, account, profile }) {
+			if (profile) {
+				token.id = profile.id;
+			}
+			return token;
+		},
+		async session({ session, token, user }) {
+			session.user.id = token.id as string;
+			return session;
+		}
+	},
+	cookies: {
+		sessionToken: {
+			name: 'sessionToken',
+			options: {
+				httpOnly: true,
+				sameSite: IS_PRODUCTION ? 'none' : 'lax',
+				secure: Boolean(IS_PRODUCTION),
+				domain: IS_PRODUCTION ? '.bobbynooby.dev' : undefined
+			}
+		}
+	}
 };

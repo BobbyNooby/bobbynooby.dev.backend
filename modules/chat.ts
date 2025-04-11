@@ -3,11 +3,35 @@ import WebSocket from "ws";
 import { MongoDBClient } from "./mongodb";
 import { ChatMessage, RecievedChatMessage } from "../types";
 import { DiscordBot } from "./discord";
+import { consoleBob } from "../utils";
 
-const CHAT_COLLECTION = process.env.CHAT_COLLECTION;
+const IS_PRODUCTION = process.env.IS_PRODUCTION;
+if (IS_PRODUCTION == undefined) {
+  consoleBob("IS_PRODUCTION is not set");
+  process.exit(1);
+}
 
-if (!CHAT_COLLECTION) {
-  console.log("CHAT_COLLECTION is not set");
+const PRODUCTION_CHAT_COLLECTION = process.env.PRODUCTION_CHAT_COLLECTION;
+const DEV_CHAT_COLLECTION = process.env.DEV_CHAT_COLLECTION;
+
+if (PRODUCTION_CHAT_COLLECTION == undefined) {
+  consoleBob("PRODUCTION_CHAT_COLLECTION is not set");
+  process.exit(1);
+} else if (DEV_CHAT_COLLECTION == undefined) {
+  consoleBob("DEVELOPMENT_CHAT_COLLECTION is not set");
+  process.exit(1);
+}
+
+let CHAT_COLLECTION = "";
+
+if (IS_PRODUCTION == "true") {
+  consoleBob("Running in production mode");
+  CHAT_COLLECTION = PRODUCTION_CHAT_COLLECTION!;
+} else if (IS_PRODUCTION == "false") {
+  consoleBob("Running in development mode");
+  CHAT_COLLECTION = DEV_CHAT_COLLECTION!;
+} else {
+  consoleBob("IS_PRODUCTION is not set to true or false");
   process.exit(1);
 }
 
@@ -83,7 +107,8 @@ export class SimpleChat {
       .find()
       .sort({ created_at: -1 })
       .limit(count)
-      .toArray().then((messages) => messages.reverse());
+      .toArray()
+      .then((messages) => messages.reverse());
   }
 
   consoleBob(...args: any[]) {
