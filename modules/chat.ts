@@ -36,7 +36,9 @@ export class SimpleChat {
         (await this.mongoClient.isAdmin(sessionId)) == true ? "owner" : "guest",
     };
 
-    this.db.collection("chat-dev").insertOne(messageObject);
+    this.db
+      .collection(process.env.CHAT_COLLECTION || "chat-prod")
+      .insertOne(messageObject);
     this.broadcast({ message: messageObject });
   }
 
@@ -62,7 +64,7 @@ export class SimpleChat {
 
   async getLastMessages(count: number = 100): Promise<ChatMessage[]> {
     return await this.db
-      .collection<ChatMessage>("chat-dev")
+      .collection<ChatMessage>(process.env.CHAT_COLLECTION || "chat-prod")
       .find()
       .sort({ created_at: 1 })
       .limit(count)
