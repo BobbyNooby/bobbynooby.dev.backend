@@ -1,4 +1,17 @@
 import { Db, MongoClient } from "mongodb";
+import { consoleBob } from "../utils";
+
+const MONGO_ATLAS_URL = process.env.MONGO_ATLAS_URL;
+if (!MONGO_ATLAS_URL) {
+  consoleBob("MONGO_ATLAS_URL is not set");
+  process.exit(1);
+}
+
+const MONGO_VPS_URL = process.env.MONGO_VPS_URL;
+if (!MONGO_VPS_URL) {
+  consoleBob("MONGO_VPS_URL is not set");
+  process.exit(1);
+}
 
 export class MongoDBClient {
   atlasClient: MongoClient;
@@ -11,11 +24,7 @@ export class MongoDBClient {
   async initialize() {
     try {
       this.consoleBob("Connecting to MongoDB...");
-      if (!process.env.MONGO_ATLAS_URL) {
-        this.consoleBob("MONGO_ATLAS_URL is not set");
-        process.exit(1);
-      }
-      this.atlasClient = new MongoClient(process.env.MONGO_ATLAS_URL, {
+      this.atlasClient = new MongoClient(MONGO_ATLAS_URL!, {
         tls: true,
         ssl: true,
       });
@@ -24,7 +33,7 @@ export class MongoDBClient {
         this.consoleBob("MONGO_VPS_URL is not set");
         process.exit(1);
       }
-      this.vpsClient = new MongoClient(process.env.MONGO_VPS_URL);
+      this.vpsClient = new MongoClient(MONGO_VPS_URL!);
 
       this.consoleBob("Connecting to Atlas...");
       await this.atlasClient.connect();

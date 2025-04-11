@@ -7,7 +7,7 @@ import { UserCount } from "./modules/userCount";
 import { SpotifyClient } from "./modules/spotify";
 import { MongoDBClient } from "./modules/mongodb";
 import { SimpleChat } from "./modules/chat";
-import { ExpressAuth, getSession } from "@auth/express";
+import { getSession } from "@auth/express";
 import { authConfig } from "./auth";
 
 dotenv.config();
@@ -33,7 +33,7 @@ const userCount = new UserCount();
 const spotifyClient = new SpotifyClient(mongoDbClient);
 await spotifyClient.initialize();
 
-const chat = new SimpleChat(mongoDbClient);
+const chat = new SimpleChat(mongoDbClient, discordBot);
 
 wss.on("connection", async (ws, req) => {
   const subroute = req.url;

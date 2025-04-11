@@ -1,11 +1,24 @@
 import { ExpressAuthConfig } from "@auth/express";
 import Discord from "@auth/express/providers/discord";
+import { consoleBob } from "./utils";
+
+const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
+if (!DISCORD_CLIENT_ID) {
+  consoleBob("DISCORD_CLIENT_ID is not set");
+  process.exit(1);
+}
+
+const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+if (!DISCORD_CLIENT_SECRET) {
+  consoleBob("DISCORD_CLIENT_SECRET is not set");
+  process.exit(1);
+}
 
 export const authConfig: ExpressAuthConfig = {
   providers: [
     Discord({
-      clientId: process.env.DISCORD_CLIENT_ID,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET,
+      clientId: DISCORD_CLIENT_ID,
+      clientSecret: DISCORD_CLIENT_SECRET,
       authorization: "https://discord.com/api/oauth2/authorize?scope=identify",
     }),
   ],

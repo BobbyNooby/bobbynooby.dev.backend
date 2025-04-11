@@ -2,17 +2,27 @@ import { Db } from "mongodb";
 import WebSocket from "ws";
 import { MongoDBClient } from "./mongodb";
 import { ChatMessage, RecievedChatMessage } from "../types";
+import { DiscordBot } from "./discord";
+
+const CHAT_COLLECTION = process.env.CHAT_COLLECTION;
+
+if (!CHAT_COLLECTION) {
+  console.log("CHAT_COLLECTION is not set");
+  process.exit(1);
+}
 
 export class SimpleChat {
   users: Set<WebSocket>;
   mongoClient: MongoDBClient;
+  discordBot: DiscordBot;
   db: Db;
 
-  constructor(mongoDbClient: MongoDBClient) {
+  constructor(mongoDbClient: MongoDBClient, discordBot: DiscordBot) {
     {
       this.users = new Set<WebSocket>();
       this.db = mongoDbClient.dbVPS;
       this.mongoClient = mongoDbClient;
+      this.discordBot = discordBot;
     }
   }
 
@@ -36,9 +46,14 @@ export class SimpleChat {
         (await this.mongoClient.isAdmin(sessionId)) == true ? "owner" : "guest",
     };
 
-    this.db
-      .collection(process.env.CHAT_COLLECTION || "chat-prod")
+    await this.db
+      .collection(CHAT_COLLECTION || "chat-prod")
       .insertOne(messageObject);
+    await this.discordBot.sendDiscordMessage(
+      parsedMessage.name,
+      parsedMessage.message,
+      messageObject.rank
+    );
     this.broadcast({ message: messageObject });
   }
 
@@ -62,13 +77,13 @@ export class SimpleChat {
     }
   }
 
-  async getLastMessages(count: number = 100): Promise<ChatMessage[]> {
+  async getLastMessages(count: number = 500): Promise<ChatMessage[]> {
     return await this.db
-      .collection<ChatMessage>(process.env.CHAT_COLLECTION || "chat-prod")
+      .collection<ChatMessage>(CHAT_COLLECTION || "chat-prod")
       .find()
-      .sort({ created_at: 1 })
+      .sort({ created_at: -1 })
       .limit(count)
-      .toArray();
+      .toArray().then((messages) => messages.reverse());
   }
 
   consoleBob(...args: any[]) {

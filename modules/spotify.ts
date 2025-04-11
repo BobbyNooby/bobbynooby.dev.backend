@@ -1,6 +1,24 @@
 import WebSocket from "ws";
 import { Db } from "mongodb";
 import { MongoDBClient } from "./mongodb";
+import { consoleBob } from "../utils";
+
+const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
+if (!SPOTIFY_CLIENT_ID) {
+  consoleBob("SPOTIFY_CLIENT_ID is not set");
+  process.exit(1);
+}
+const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
+if (!SPOTIFY_CLIENT_SECRET) {
+  consoleBob("SPOTIFY_CLIENT_SECRET is not set");
+  process.exit(1);
+}
+
+const SPOTIFY_CLIENT_REFRESH_TOKEN = process.env.SPOTIFY_CLIENT_REFRESH_TOKEN;
+if (!SPOTIFY_CLIENT_REFRESH_TOKEN) {
+  consoleBob("SPOTIFY_CLIENT_REFRESH_TOKEN is not set");
+  process.exit(1);
+}
 
 export type SpotifySongData = {
   isPlaying: boolean;
@@ -56,9 +74,9 @@ export class SpotifyClient {
         },
         body: new URLSearchParams({
           grant_type: "refresh_token",
-          refresh_token: process.env.SPOTIFY_CLIENT_REFRESH_TOKEN!,
-          client_id: process.env.SPOTIFY_CLIENT_ID!,
-          client_secret: process.env.SPOTIFY_CLIENT_SECRET!,
+          refresh_token: SPOTIFY_CLIENT_REFRESH_TOKEN!,
+          client_id: SPOTIFY_CLIENT_ID!,
+          client_secret: SPOTIFY_CLIENT_SECRET!,
           redirect_uri: "https://bobbynooby.dev/",
         }),
       }
