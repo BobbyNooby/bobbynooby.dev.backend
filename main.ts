@@ -1,16 +1,19 @@
 import dotenv from "dotenv";
 import express from "express";
-import { consoleBob } from "./utils";
+import { consoleBob, convertReq } from "./utils";
 import { WebSocketServer } from "ws";
 import { DiscordBot } from "./modules/discord";
 import { UserCount } from "./modules/userCount";
 import { SpotifyClient } from "./modules/spotify";
 import { MongoDBClient } from "./modules/mongodb";
 import { SimpleChat } from "./modules/chat";
+import { ExpressAuth, getSession } from "@auth/express";
+import { authConfig } from "./auth";
 
 dotenv.config();
 
 const app = express();
+app.set("trust proxy", true);
 const port = 3000;
 
 const server = app.listen(port, () => {
@@ -32,12 +35,13 @@ await spotifyClient.initialize();
 
 const chat = new SimpleChat(mongoDbClient);
 
-wss.on("connection", (ws, req) => {
+wss.on("connection", async (ws, req) => {
   const subroute = req.url;
-  consoleBob(`WebSocket connection connected to ${subroute}`);
+  const session = await getSession(convertReq(req, app), authConfig);
+  const sessionId = session?.user?.id || "skibiditoiletmoment";
 
   if (subroute === "/discord") {
-    discordBot.addWebSocket(ws);
+    await discordBot.addWebSocket(ws);
 
     ws.on("close", () => {
       discordBot.removeWebSocket(ws);
@@ -55,7 +59,7 @@ wss.on("connection", (ws, req) => {
   }
 
   if (subroute === "/spotify") {
-    spotifyClient.addWebSocket(ws);
+    await spotifyClient.addWebSocket(ws);
 
     ws.on("close", () => {
       spotifyClient.removeWebSocket(ws);
@@ -64,10 +68,10 @@ wss.on("connection", (ws, req) => {
   }
 
   if (subroute === "/chat") {
-    chat.addWebSocket(ws);
+    await chat.addWebSocket(ws);
 
-    ws.on("message", (message) => {
-      chat.onRecieve(String(message));
+    ws.on("message", async (message) => {
+      await chat.onRecieve(String(message), sessionId);
     });
 
     ws.on("close", () => {

@@ -16,7 +16,7 @@ export class SimpleChat {
     }
   }
 
-  async onRecieve(message: string) {
+  async onRecieve(message: string, sessionId: string) {
     const parsedMessage = JSON.parse(message) as RecievedChatMessage;
 
     const requiredKeys = ["name", "message"];
@@ -33,21 +33,17 @@ export class SimpleChat {
       created_at: new Date().toISOString(),
       message: parsedMessage.message,
       rank:
-        (await this.mongoClient.isAdmin(parsedMessage.sessionId)) == true
-          ? "owner"
-          : "guest",
+        (await this.mongoClient.isAdmin(sessionId)) == true ? "owner" : "guest",
     };
 
-    this.db.collection("chat-prod").insertOne(messageObject);
+    this.db.collection("chat-dev").insertOne(messageObject);
     this.broadcast({ message: messageObject });
   }
 
   async addWebSocket(ws: WebSocket) {
     this.users.add(ws);
 
-    const pastMessages: ChatMessage[] = [
-      ...(await this.getLastMessages())
-    ];
+    const pastMessages: ChatMessage[] = [...(await this.getLastMessages())];
 
     ws.send(JSON.stringify({ initialMessages: pastMessages }));
   }
@@ -66,7 +62,7 @@ export class SimpleChat {
 
   async getLastMessages(count: number = 100): Promise<ChatMessage[]> {
     return await this.db
-      .collection<ChatMessage>("chat-prod")
+      .collection<ChatMessage>("chat-dev")
       .find()
       .sort({ created_at: 1 })
       .limit(count)
