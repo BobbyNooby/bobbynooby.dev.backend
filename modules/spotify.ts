@@ -121,6 +121,7 @@ export class SpotifyClient {
 
     if (res.status === 204 || res.status > 400) {
       // If no content or error, get from MongoDB
+      await this.refreshToken();
       await this.sendLastPlayedFromDB();
       return;
     }
