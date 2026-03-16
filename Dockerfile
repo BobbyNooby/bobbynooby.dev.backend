@@ -8,6 +8,6 @@ RUN bun install --frozen-lockfile --production
 # Copy source
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["bun", "run", "main.ts"]
