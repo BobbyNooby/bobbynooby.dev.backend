@@ -19,7 +19,7 @@ const port = process.env.WSS_PORT || 3001;
 
 const server = app.listen(port, () => {
   consoleBob("Server started");
-  consoleBob("Listening on port 3000");
+  consoleBob(`Listening on port ${port}`);
 });
 
 const wss = new WebSocketServer({ server });
