@@ -15,7 +15,7 @@ dotenv.config();
 const app = express();
 app.set("trust proxy", true);
 app.use("/", ExpressAuth(authConfig));
-const port = 3000;
+const port = process.env.WSS_PORT || 3001;
 
 const server = app.listen(port, () => {
   consoleBob("Server started");
@@ -42,7 +42,7 @@ wss.on("connection", async (ws, req) => {
   const session = await getSession(convertReq(req, app), authConfig);
 
   consoleBob(
-    `Websocket Connected. User : ${session?.user?.name}, ID : ${session?.user?.id}`
+    `Websocket Connected. User : ${session?.user?.name}, ID : ${session?.user?.id}`,
   );
 
   const sessionId = session?.user?.id || "skibiditoiletmoment";
